@@ -1,1 +1,1 @@
-wechat-ocr=0.0.3
+wechat-ocr==0.0.3
