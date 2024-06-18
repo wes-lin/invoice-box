@@ -5,7 +5,7 @@ from wechat_ocr.ocr_manager import OcrManager, OCR_MAX_TASK_ID
 
 
 wechat_ocr_dir = ".\\wechat-ocr\\WeChatOCR.exe"
-wechat_dir = "..\\wechat-ocr"
+wechat_dir = ".\\wechat-ocr"
 
 def ocr_result_callback(img_path:str, results:dict):
     print(f"识别成功，img_path: {img_path}")
@@ -22,7 +22,7 @@ def main():
     # 启动ocr服务
     ocr_manager.StartWeChatOCR()
     # 开始识别图片
-    ocr_manager.DoOCRTask(r"..\\test\\1.jpg")
+    ocr_manager.DoOCRTask(r".\\test\\1.jpg")
     time.sleep(1)
     while ocr_manager.m_task_id.qsize() != OCR_MAX_TASK_ID:
         pass
