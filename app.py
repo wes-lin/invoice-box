@@ -15,7 +15,7 @@ def ocr_result_callback(img_path: str, results: dict):
 
 
 def main():
-    print(sys.stdout.encoding)
+    print(f"encode:{sys.stdout.encoding}")
     ocr_manager = OcrManager(wechat_dir)
     # 设置WeChatOcr目录
     ocr_manager.SetExePath(wechat_ocr_dir)
