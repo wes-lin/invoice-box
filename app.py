@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import sys
 from wechat_ocr.ocr_manager import OcrManager, OCR_MAX_TASK_ID
 
 
@@ -14,6 +15,7 @@ def ocr_result_callback(img_path: str, results: dict):
 
 
 def main():
+    print(sys.stdout.encoding)
     ocr_manager = OcrManager(wechat_dir)
     # 设置WeChatOcr目录
     ocr_manager.SetExePath(wechat_ocr_dir)
