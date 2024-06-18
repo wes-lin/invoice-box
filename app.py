@@ -4,12 +4,14 @@ import time
 from wechat_ocr.ocr_manager import OcrManager, OCR_MAX_TASK_ID
 
 
-wechat_ocr_dir = ".\\wechat-ocr\\WeChatOCR.exe"
-wechat_dir = ".\\wechat-ocr"
+wechat_ocr_dir = r".\wechat-ocr\WeChatOCR.exe"
+wechat_dir = r".\wechat-ocr"
 
-def ocr_result_callback(img_path:str, results:dict):
+
+def ocr_result_callback(img_path: str, results: dict):
     print(f"识别成功，img_path: {img_path}")
-    print(f'识别结果:'+json.dumps(results, ensure_ascii=False, indent=2))
+    print(f"识别结果:" + json.dumps(results, ensure_ascii=False, indent=2))
+
 
 def main():
     ocr_manager = OcrManager(wechat_dir)
@@ -22,13 +24,13 @@ def main():
     # 启动ocr服务
     ocr_manager.StartWeChatOCR()
     # 开始识别图片
-    ocr_manager.DoOCRTask(r".\\test\\1.jpg")
+    ocr_manager.DoOCRTask(r".\test\1.jpg")
     time.sleep(1)
     while ocr_manager.m_task_id.qsize() != OCR_MAX_TASK_ID:
         pass
     # 识别输出结果
     ocr_manager.KillWeChatOCR()
-    
+
 
 if __name__ == "__main__":
     main()
