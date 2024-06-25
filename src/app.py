@@ -1,18 +1,23 @@
 import sys
+import json
 
-from util import ocr
+from util import OcrManager
+import logging
 
-
-# def ocr_result_callback(img_path: str, results: dict):
-#     print(f"识别成功，img_path: {img_path}")
-#     print(f"识别结果:" + json.dumps(results, ensure_ascii=False, indent=2))
+logging.basicConfig(level=logging.DEBUG)
+wechat_ocr_dir = r".\wechat-ocr\WeChatOCR.exe"
+wechat_dir = r".\wechat-ocr"
 
 
 def main():
     print(f"encode:{sys.stdout.encoding}")
-    ocr.extract_text([r".\test\1.jpg"])
-    ocr.extract_text([r".\test\2.jpg"])
-    ocr.extract_text([r".\test\2.jpg"])
+    ocr_manager = OcrManager(wechat_dir)
+    ocr_manager.SetExePath(wechat_ocr_dir)
+
+    ocr_manager.StartWeChatOCR()
+    result = ocr_manager.DoOCRTask(r".\test\1.jpg")
+    text = "".join(map(lambda r: r["text"], result["ocrResult"]))
+    print(f"识别结果:" + text)
 
 
 if __name__ == "__main__":

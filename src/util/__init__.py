@@ -1,1 +1,1 @@
-from .ocr import ocr as ocr
+from .ocr_manager import OcrManager
