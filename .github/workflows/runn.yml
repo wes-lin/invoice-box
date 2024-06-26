@@ -24,4 +24,4 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: |
-          python app.py
+          python src/app.py
