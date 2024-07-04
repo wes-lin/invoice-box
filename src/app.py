@@ -7,24 +7,12 @@ from email.header import decode_header
 import base64
 from io import BytesIO
 from bill import Bill, PDFBill
-from util import OcrManager
+from util import OcrManager, extract_message
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 wechat_ocr_dir = r".\wechat-ocr\WeChatOCR.exe"
 wechat_dir = r".\wechat-ocr"
-
-RULE_MAP = [
-    "下单时间.*(?P<order_date>[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}[ ]{0,}[0-9]{2}:[0-9]{2}:[0-9]{2})",
-    "总计[ ]{0,}(?P<order_money>([0-9]+|[0-9]{0,})(.[0-9]{1,2}))",
-    "合计[ ]{0,}(?P<order_money>([0-9]+|[0-9]{0,})(.[0-9]{1,2}))",
-    "实付款[ ]{0,}(?P<order_money>([0-9]+|[0-9]{0,})(.[0-9]{1,2}))",
-    "开票日期:(?P<invoice_date>[0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日)",
-    "（小写）(?P<invoice_money>([0-9]+|[0-9]{0,})(.[0-9]{1,2}))",
-    "行程起止日期[^0-9]+(?P<trip_date>[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})",
-    "合计\\s+(?P<trip_money>([0-9]+|[0-9]{0,})(.[0-9]{1,2}))",
-    "申请日期[^0-9]+(?P<filed_date>[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})",
-]
 
 ocr_manager = OcrManager(wechat_dir)
 
@@ -68,7 +56,7 @@ def get_bill(message: Message):
     else:
         logging.error("unsupport file:{}".format(file_name))
         return None
-    vars = bill.extract(RULE_MAP)
+    vars = bill.extract()
     return {
         "file_name": file_name,
         "content_type": content_type,
@@ -88,16 +76,23 @@ def get_attachments(message: EmailMessage):
     return tasks
 
 
+def extract_bill(message: EmailMessage):
+    messages = extract_message(message)
+    _bills = []
+    for _message in messages:
+        attachments = get_attachments(_message)
+        for attachment in attachments:
+            _bills.append(attachment)
+    return _bills
+
+
 def main():
 
     ocr_manager.SetExePath(wechat_ocr_dir)
     ocr_manager.StartWeChatOCR()
-    # result = ocr_manager.DoOCRTask(r".\test\1.jpg")
-    # text = "".join(map(lambda r: r["text"], result["ocrResult"]))
-    # print(f"识别结果:" + text)
     email_file = open(r".\test\test.eml")
     message: EmailMessage = email.message_from_file(email_file, _class=EmailMessage)
-    data = get_attachments(message)
+    data = extract_bill(message)
     logging.info(data)
 
 
