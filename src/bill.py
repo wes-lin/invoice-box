@@ -82,7 +82,7 @@ DATA: List[Tuple[str, BasicConvert]] = [
     ),
     (
         "trip_money",
-        MoneyConvert("合计\\s+(([0-9]+|[0-9]{0,})(.[0-9]{1,2}))"),
+        MoneyConvert("合计(([0-9]+|[0-9]{0,})(.[0-9]{1,2}))元"),
     ),
     (
         "filed_date",
