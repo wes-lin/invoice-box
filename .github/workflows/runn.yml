@@ -8,12 +8,6 @@ jobs:
     environment: prod
     steps:
       - uses: actions/checkout@v4
-      - name: init env
-        env:
-          IMAP_URL: ${{secrets.IMAP_URL}}
-          SMTP_URL: ${{secrets.SMTP_URL}}
-          EMAIL_USER: ${{secrets.EMAIL_USER}}
-          EMAIL_PASS: ${{secrets.EMAIL_PASS}}
       - name: Set up Python
         # This is the version of the action for setting up Python, not the Python version.
         uses: actions/setup-python@v4
@@ -30,5 +24,9 @@ jobs:
       - name: Run
         env:
           PYTHONIOENCODING: utf-8
+          IMAP_URL: ${{secrets.IMAP_URL}}
+          SMTP_URL: ${{secrets.SMTP_URL}}
+          EMAIL_USER: ${{secrets.EMAIL_USER}}
+          EMAIL_PASS: ${{secrets.EMAIL_PASS}}
         run: |
           python src/app.py
