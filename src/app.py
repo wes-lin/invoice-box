@@ -1,13 +1,20 @@
 import os
+from typing import List
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
+import imaplib
+import smtplib
 import email
 from email.message import EmailMessage, Message
-from email.header import decode_header
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.header import Header
+from email.utils import parseaddr
 import base64
 from io import BytesIO
 from bill import Bill, PDFBill
-from util import OcrManager, extract_message
+from util import OcrManager, extract_message, decode_str, build_MIME
 from datetime import datetime
 import logging
 
@@ -16,13 +23,6 @@ wechat_ocr_dir = r".\wechat-ocr\WeChatOCR.exe"
 wechat_dir = r".\wechat-ocr"
 
 ocr_manager = OcrManager(wechat_dir)
-
-
-def decode_str(s):
-    value, charset = decode_header(s)[0]
-    if charset:
-        value = value.decode(charset)
-    return value
 
 
 def base64_byte(s: str):
@@ -50,9 +50,11 @@ def get_bill(message: Message):
     bill: Bill = None
     if file_name.endswith(".pdf"):
         bill = PDFBill(base64_byte(message.get_payload()))
-    elif content_type.startswith("image/"):
+    elif content_type.startswith("image/") or file_name.endswith(
+        ("jpg", "png", "jpeg", "bmp")
+    ):
         text = ocr(message.get_payload())
-        logging.info("图片内容：" + text)
+        # logging.info("图片内容：" + text)
         bill = Bill(text)
     else:
         logging.error("unsupport file:{}".format(file_name))
@@ -61,8 +63,7 @@ def get_bill(message: Message):
     return {
         "file_name": file_name,
         "content_type": content_type,
-        "content": bill.context,
-        # "payload": base64.b64decode(message.get_payload()),
+        "payload": base64.b64decode(message.get_payload()),
         "vars": vars,
     }
 
@@ -82,6 +83,29 @@ def get_attachments(message: EmailMessage, merge_var: bool):
     return tasks
 
 
+def send_result_messag(_from: str, attachments: List, content: MIMEBase):
+    mm = MIMEMultipart()
+    mm["From"] = os.getenv("EMAIL_USER")
+    mm["To"] = _from
+    mm["Subject"] = Header(
+        "Invoice Report {}".format(datetime.now().strftime("%Y%m%d%H%M%S")), "utf-8"
+    )
+    mm.attach(content)
+
+    for attachment in attachments:
+        mm.attach(
+            build_MIME(
+                attachment["payload"],
+                attachment["new_file_name"],
+            )
+        )
+    obj = smtplib.SMTP(os.getenv("SMTP_URL"))
+    obj.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+    obj.send_message(mm)
+    obj.quit()
+    logging.warning("发送成功")
+
+
 def exect(message: EmailMessage, name_format: str):
     try:
         name_format.format(money="100", date=datetime.strptime("20240801", "%Y%m%d"))
@@ -93,9 +117,14 @@ def exect(message: EmailMessage, name_format: str):
     for _message in messages:
         attachments = get_attachments(_message, _message != message)
         for attachment in attachments:
-            print(get_new_file_name(attachment, name_format, _message != message))
+            attachment["new_file_name"] = get_new_file_name(
+                attachment, name_format, _message != message
+            )
             _bills.append(attachment)
-    print(_bills)
+    # 发送处理结果
+    content = MIMEText("这是报销单据", "plain", "utf-8")
+    _from = parseaddr(message.get("From"))
+    send_result_messag(_from[1], _bills, content)
 
 
 def get_new_file_name(result: dict, name_format: str, merge_var: bool):
@@ -119,9 +148,28 @@ def main():
 
     ocr_manager.SetExePath(wechat_ocr_dir)
     ocr_manager.StartWeChatOCR()
-    email_file = open(r".\test\test.eml")
-    message: EmailMessage = email.message_from_file(email_file, _class=EmailMessage)
-    exect(message, "Wes-{money}-{date:%m%d}")
+    logging.warning("开始读取邮件")
+    if os.environ.get("environment") == "DEV":
+        email_file = open(r".\test\android-outlook.eml")
+        message: EmailMessage = email.message_from_file(email_file, _class=EmailMessage)
+        exect(message, "Wes-{money}-{date:%m%d}")
+    else:
+        mail = imaplib.IMAP4_SSL(os.getenv("IMAP_URL"), 993)
+        mail.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+        mail.select("inbox")
+        status, uids = mail.search(None, "UNSEEN")
+        if status != "OK":
+            raise Exception("读取异常")
+        for uid in uids[0].split():
+            status, data = mail.fetch(uid, "(RFC822)")
+            if status == "OK":
+                email_message = email.message_from_bytes(
+                    data[0][1], _class=EmailMessage
+                )
+                exect(email_message, decode_str(email_message.get("subject")))
+                # 标记为已读
+                mail.store(uid, "+FLAGS", "\Seen")
+    logging.warning("执行结束")
 
 
 if __name__ == "__main__":

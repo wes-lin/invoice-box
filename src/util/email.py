@@ -1,8 +1,18 @@
 from typing import List
 from email.message import EmailMessage
+from email.header import decode_header
 from email.mime.application import MIMEApplication
 from email.mime.nonmultipart import MIMENonMultipart
 import email
+import base64
+from io import BytesIO
+
+
+def decode_str(s) -> str:
+    value, charset = decode_header(s)[0]
+    if charset:
+        value = value.decode(charset)
+    return value
 
 
 def extract_message(message: EmailMessage):
@@ -19,6 +29,13 @@ def _extract_message(message: EmailMessage, messages: List[EmailMessage]):
                     payload.as_bytes(), _class=EmailMessage
                 )
                 _extract_message(_message, messages)
+        elif attachment.get_filename() != None and decode_str(
+            attachment.get_filename()
+        ).endswith(".eml"):
+            _message: EmailMessage = email.message_from_bytes(
+                base64.b64decode(attachment.get_payload()), _class=EmailMessage
+            )
+            _extract_message(_message, messages)
     messages.append(message)
 
 

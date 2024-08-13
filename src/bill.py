@@ -70,11 +70,15 @@ DATA: List[Tuple[str, BasicConvert]] = [
     ),
     (
         "invoice_date",
-        DateConvert("开票日期:([0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日)"),
+        DateConvert("开票日期:.*([0-9]{4}年[0-9]{1,2}月[0-9]{1,2}日)"),
     ),
     (
         "invoice_money",
         MoneyConvert("（小写）(([0-9]+|[0-9]{0,})(.[0-9]{1,2}))"),
+    ),
+    (
+        "invoice_money",
+        MoneyConvert("（ 小 写 ）(([0-9]+|[0-9]{0,})(.[0-9]{1,2}))"),
     ),
     (
         "trip_date",

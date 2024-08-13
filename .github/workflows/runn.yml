@@ -5,8 +5,16 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: windows-latest
+    environment: prod
     steps:
       - uses: actions/checkout@v4
+      - name: init secrets
+        uses: shine1594/secrets-to-env-action@master
+        with:
+          secrets: ${{ toJSON(secrets) }}
+          secrets_env: production
+          prefix_prod: ""
+          file_name_prod: .env
       - name: Set up Python
         # This is the version of the action for setting up Python, not the Python version.
         uses: actions/setup-python@v4
