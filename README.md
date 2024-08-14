@@ -9,6 +9,7 @@
 目前支持暂时数据变量只有两种
 1. money 票据金额
 2. date 票据日期(支持的格式月日:%m%d,年月日:%Y%m%d)
+
 滴滴的处理需要把滴滴完整的邮件当成附件添加到邮件中,图片或者pdf直接添加为附件.可以参考以下的gif图操作.
 
 ![](https://cdn.jsdelivr.net/gh/wes-lin/invoice-box/imgs/send.gif)
