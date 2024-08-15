@@ -2,7 +2,7 @@ name: Invoice Box
 
 on: 
   schedule:
-    - cron: 05 1,5,9 * * *
+    - cron: 05 23,3,7 * * *
   workflow_dispatch:
 
 jobs:
